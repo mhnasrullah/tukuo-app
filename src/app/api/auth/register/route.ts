@@ -45,24 +45,30 @@ const register = async (req: Request) => {
       });
     }
 
-    if (password.length < 8 && password) {
-      errorMessages.push({
-        field: "password",
-        message: "password should be at least 8 characters",
+    if (password) {
+      serverValidation.isLengthMoreThan(8, password, () => {
+        errorMessages.push({
+          field: "password",
+          message: "password should be at least 8 characters",
+        });
       });
     }
 
-    if (shopname.length < 6 && shopname) {
-      errorMessages.push({
-        field: "shopname",
-        message: "shopname should be at least 6 characters",
+    if (shopname) {
+      serverValidation.isLengthMoreThan(6, shopname, () => {
+        errorMessages.push({
+          field: "shopname",
+          message: "shopname should be at least 6 characters",
+        });
       });
     }
 
-    if (email && !email.includes("@")) {
-      errorMessages.push({
-        field: "email",
-        message: "email should be a valid email",
+    if (email) {
+      serverValidation.isValidEmail(email, () => {
+        errorMessages.push({
+          field: "email",
+          message: "email should be a valid email",
+        });
       });
     }
 
@@ -77,7 +83,14 @@ const register = async (req: Request) => {
     });
 
     if (existingUser) {
-      throw new ClientError("Email already exists");
+      throw new ClientError(
+        JSON.stringify([
+          {
+            field: "email",
+            message: "email is already registered",
+          },
+        ])
+      );
     }
 
     const hashedPassword = await bycript.hash(password, 10);
@@ -94,7 +107,6 @@ const register = async (req: Request) => {
       message: "Successfully registered!",
       data: user,
     });
-
   } catch (e: any) {
     if (e?.name === "ClientError") {
       return NextResponse.json(
